@@ -10,13 +10,14 @@ body {
     align-items: center;
     min-height: 100vh;
     font-family: Arial, sans-serif;
+    background: lightblue;
 }
 
 .game-board {
     width: 90vw;
     max-width: 400px;
     aspect-ratio: 1;
-    background: rgb(111, 69, 37);
+    background: rgb(0, 22, 58);
     border-radius: 6px;
     padding: 2%;
 }
@@ -45,16 +46,81 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: min(8vw, 35px);
+    font-size: min(7vw, 28px);
     font-weight: bold;
 }
 
 .tile-2 {
-    background: rgb(249, 213, 186);
+    background: rgb(105, 213, 83);
     color: black;
 }
 
 .tile-4 {
-    background: rgb(185, 144, 114);
+    background: rgb(207, 235, 94);
+    color: black;
+}
+
+.tile-8 {
+    background: rgb(228, 198, 78);
+    color: black;
+}
+
+.tile-16 {
+    background: rgb(223, 236, 35);
+    color: black;
+}
+
+.tile-32 {
+    background: rgb(236, 172, 35);
+    color: black;
+}
+
+.tile-64 {
+    background: rgb(236, 119, 35);
+    color: black;
+}
+
+.tile-128 {
+    background: rgb(243, 101, 70);
+    color: black;
+}
+
+.tile-256 {
+    background: rgb(243, 75, 75);
+    color: black;
+}
+
+.tile-512 {
+    background: rgb(86, 225, 158);
+    color: black;
+}
+
+.tile-1024 {
+    background: rgb(86, 225, 223);
+    color: black;
+}
+
+.tile-2048 {
+    background: lightblue;
+    color: black;
+}
+
+.tile-4096 {
+    background: rgb(119, 185, 247);
+    color: black;
+}
+
+.tile-8192 {
+    background: rgb(176, 178, 245);
+    color: black;
+}
+
+.tile-16384 {
+    background: rgb(131, 147, 230);
+    color: black;
+}
+
+.tile-32768 {
+    background: rgb(175, 88, 251);
     color: black;
 }
