@@ -41,7 +41,12 @@ function initGame() {
     };
 
     addRandomNumber(gameState, grid);
-    addRandomNumber(gameState, grid);
+    if (Math.random() > 0.5) {
+        addRandomNumber(gameState, grid);
+    }
+    if (Math.random() < 0.3) {
+        addRandomNumber(gameState, grid);
+    }
 
     setupKeyboardControls(gameState, grid);
 }
@@ -319,6 +324,10 @@ function handleMoveLeft(gameState, grid) {
         renderGame(gameState, grid);
         gameState.scoreElement.textContent = `Счет: ${gameState.score}`;
         addRandomNumber(gameState, grid);
+        const emptyCellsCount = countEmptyCells(gameState);
+        if (emptyCellsCount >= 5 && Math.random() > 0.5) {
+            addRandomNumber(gameState, grid);
+        }
     }
 }
 
@@ -332,6 +341,10 @@ function handleMoveRight(gameState, grid) {
         renderGame(gameState, grid);
         gameState.scoreElement.textContent = `Счет: ${gameState.score}`;
         addRandomNumber(gameState, grid);
+        const emptyCellsCount = countEmptyCells(gameState);
+        if (emptyCellsCount >= 5 && Math.random() > 0.5) {
+            addRandomNumber(gameState, grid);
+        }
     }
 }
 
@@ -345,6 +358,10 @@ function handleMoveUp(gameState, grid) {
         renderGame(gameState, grid);
         gameState.scoreElement.textContent = `Счет: ${gameState.score}`;
         addRandomNumber(gameState, grid);
+        const emptyCellsCount = countEmptyCells(gameState);
+        if (emptyCellsCount >= 5 && Math.random() > 0.5) {
+            addRandomNumber(gameState, grid);
+        }
     }
 }
 
@@ -358,8 +375,23 @@ function handleMoveDown(gameState, grid) {
         renderGame(gameState, grid);
         gameState.scoreElement.textContent = `Счет: ${gameState.score}`;
         addRandomNumber(gameState, grid);
+        const emptyCellsCount = countEmptyCells(gameState);
+        if (emptyCellsCount >= 5 && Math.random() > 0.5) {
+            addRandomNumber(gameState, grid);
+        }
     }
 }
+
+function countEmptyCells(gameState) {
+    let count = 0;
+    for (let row = 0; row < gameState.size; row++) {
+        for (let col = 0; col < gameState.size; col++) {
+            if (gameState.cells[row][col] === 0) count++;
+        }
+    }
+    return count;
+}
+
 
 function arraysEqual(a, b) {
     if (a.length !== b.length) return false;
