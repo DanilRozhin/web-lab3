@@ -78,20 +78,30 @@ function createTile(value, row, col, grid) {
 }
 
 function moveRowLeft(row) {
-    let newRow = [...row];
     let score = 0;
 
-    newRow = newRow.filter(cell => cell !== 0);
+    const nonZero = row.filter(cell => cell !== 0);
 
-    for (let i = 0; i < newRow.length - 1; i++) {
-        if (newRow[i] === newRow[i + 1]) {
-            newRow[i] *= 2;
-            score += newRow[i];
-            newRow.splice(i + 1, 1);
+    if (nonZero.length === 0) {
+        return { newRow: Array(row.length).fill(0), score: 0 };
+    }
+
+    const newRow = [];
+    let i = 0;
+
+    while (i < nonZero.length) {
+        if (i < nonZero.length - 1 && nonZero[i] === nonZero[i + 1]) {
+            newRow.push(nonZero[i] * 2);
+            score += nonZero[i] * 2;
+            i += 2;
+        }
+        else {
+            newRow.push(nonZero[i]);
+            i += 1;
         }
     }
 
-    while (newRow.length < 4) {
+    while (newRow.length < row.length) {
         newRow.push(0);
     }
 
@@ -99,30 +109,96 @@ function moveRowLeft(row) {
 }
 
 function moveRowRight(row) {
-    let newRow = [...row];
     let score = 0;
 
-    newRow = newRow.filter(cell => cell !== 0);
+    const nonZero = row.filter(cell => cell !== 0);
 
-    const mergedRow = [];
-    let i = newRow.length - 1;
+    if (nonZero.length === 0) {
+        return { newRow: Array(row.length).fill(0), score: 0 };
+    }
+
+    const newRow = [];
+    let i = nonZero.length - 1;
 
     while (i >= 0) {
-        if (i > 0 && newRow[i] === newRow[i - 1]) {
-            mergedRow.unshift(newRow[i] * 2);
-            score += newRow[i] * 2;
+        if (i > 0 && nonZero[i] === nonZero[i - 1]) {
+            newRow.unshift(nonZero[i] * 2);
+            score += nonZero[i] * 2;
             i -= 2;
-        } else {
-            mergedRow.unshift(newRow[i]);
+        }
+        else {
+            newRow.unshift(nonZero[i]);
             i -= 1;
         }
     }
 
-    while (mergedRow.length < 4) {
-        mergedRow.unshift(0);
+    while (newRow.length < row.length) {
+        newRow.unshift(0);
     }
 
-    return { newRow: mergedRow, score };
+    return { newRow, score };
+}
+
+function moveColumnUp(column) {
+    let score = 0;
+
+    const nonZero = column.filter(cell => cell !== 0);
+
+    if (nonZero.length === 0) {
+        return { newColumn: Array(column.length).fill(0), score: 0 };
+    }
+
+    const newColumn = [];
+    let i = 0;
+
+    while (i < nonZero.length) {
+        if (i < nonZero.length - 1 && nonZero[i] === nonZero[i + 1]) {
+            newColumn.push(nonZero[i] * 2);
+            score += nonZero[i] * 2;
+            i += 2;
+        }
+        else {
+            newColumn.push(nonZero[i]);
+            i += 1;
+        }
+    }
+
+    while (newColumn.length < column.length) {
+        newColumn.push(0);
+    }
+
+    return { newColumn, score };
+}
+
+function moveColumnDown(column) {
+    let score = 0;
+
+    const nonZero = column.filter(cell => cell !== 0);
+
+    if (nonZero.length === 0) {
+        return { newColumn: Array(column.length).fill(0), score: 0 };
+    }
+
+    const newColumn = [];
+    let i = nonZero.length - 1;
+
+    while (i >= 0) {
+        if (i > 0 && nonZero[i] === nonZero[i - 1]) {
+            newColumn.unshift(nonZero[i] * 2);
+            score += nonZero[i] * 2;
+            i -= 2;
+        }
+        else {
+            newColumn.unshift(nonZero[i]);
+            i -= 1;
+        }
+    }
+
+    while (newColumn.length < column.length) {
+        newColumn.unshift(0);
+    }
+
+    return { newColumn, score };
 }
 
 function moveLeft(gameState) {
@@ -169,25 +245,68 @@ function moveRight(gameState) {
     };
 }
 
-function arraysEqual(a, b) {
-    if (a.length !== b.length) return false;
-    for (let i = 0; i < a.length; i++) {
-        if (a[i] !== b[i]) return false;
+function moveUp(gameState) {
+    const newCells = [];
+    for (let i = 0; i < gameState.size; i++) {
+        newCells.push(Array(gameState.size).fill(0));
     }
-    return true;
+    let totalScore = 0;
+    let moved = false;
+
+    for (let col = 0; col < gameState.size; col++) {
+        const column = [];
+        for (let row = 0; row < gameState.size; row++) {
+            column.push(gameState.cells[row][col]);
+        }
+
+        const originalColumn = [...column];
+        const { newColumn, score } = moveColumnUp(column);
+
+        for (let row = 0; row < gameState.size; row++) {
+            newCells[row][col] = newColumn[row];
+        }
+        
+        totalScore += score;
+        if (!arraysEqual(originalColumn, newColumn)) moved = true;
+    }
+
+    return {
+        cells: newCells,
+        score: gameState.score + totalScore,
+        moved: moved,
+    };
 }
 
-function setupKeyboardControls(gameState, grid) {
-    document.addEventListener('keydown', (event) => {
-        if (event.key === 'ArrowLeft') {
-            event.preventDefault();
-            handleMoveLeft(gameState, grid);
+function moveDown(gameState) {
+    const newCells = [];
+    for (let i = 0; i < gameState.size; i++) {
+        newCells.push(Array(gameState.size).fill(0));
+    }
+    let totalScore = 0;
+    let moved = false;
+
+    for (let col = 0; col < gameState.size; col++) {
+        const column = [];
+        for (let row = 0; row < gameState.size; row++) {
+            column.push(gameState.cells[row][col]);
         }
-        else if (event.key === 'ArrowRight') {
-            event.preventDefault();
-            handleMoveRight(gameState, grid);
+
+        const originalColumn = [...column];
+        const { newColumn, score } = moveColumnDown(column);
+
+        for (let row = 0; row < gameState.size; row++) {
+            newCells[row][col] = newColumn[row];
         }
-    });
+        
+        totalScore += score;
+        if (!arraysEqual(originalColumn, newColumn)) moved = true;
+    }
+
+    return {
+        cells: newCells,
+        score: gameState.score + totalScore,
+        moved: moved,
+    };
 }
 
 function handleMoveLeft(gameState, grid) {
@@ -216,6 +335,60 @@ function handleMoveRight(gameState, grid) {
     }
 }
 
+function handleMoveUp(gameState, grid) {
+    const result = moveUp(gameState);
+
+    if (result.moved) {
+        gameState.cells = result.cells;
+        gameState.score = result.score;
+
+        renderGame(gameState, grid);
+        gameState.scoreElement.textContent = `Счет: ${gameState.score}`;
+        addRandomNumber(gameState, grid);
+    }
+}
+
+function handleMoveDown(gameState, grid) {
+    const result = moveDown(gameState);
+
+    if (result.moved) {
+        gameState.cells = result.cells;
+        gameState.score = result.score;
+
+        renderGame(gameState, grid);
+        gameState.scoreElement.textContent = `Счет: ${gameState.score}`;
+        addRandomNumber(gameState, grid);
+    }
+}
+
+function arraysEqual(a, b) {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) return false;
+    }
+    return true;
+}
+
+function setupKeyboardControls(gameState, grid) {
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'ArrowLeft') {
+            event.preventDefault();
+            handleMoveLeft(gameState, grid);
+        }
+        else if (event.key === 'ArrowRight') {
+            event.preventDefault();
+            handleMoveRight(gameState, grid);
+        }
+        else if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            handleMoveUp(gameState, grid);
+        }
+        else if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            handleMoveDown(gameState, grid);
+        }
+    });
+}
 
 function renderGame(gameState, grid) {
     const tiles = document.querySelectorAll('.tile');
