@@ -22,6 +22,16 @@ body {
     padding: 2%;
 }
 
+.score {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+    padding: 12px 24px;
+    margin-bottom: 20px;
+    display: inline-block;
+    min-width: 150px;
+}
+
 .grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -151,13 +161,6 @@ body {
     max-width: 280px;
     width: 80%;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    transform: scale(0.8);
-    opacity: 0;
-}
-
-.modal.show .modal-content {
-    transform: scale(1);
-    opacity: 1;
 }
 
 .modal h2 {
@@ -187,4 +190,116 @@ body {
 .restart-btn:hover {
     background: #45a049;
     transform: translateY(-1px);
+}
+
+.buttons-container {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    justify-content: center;
+}
+
+.undo-btn, .restart-game-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.undo-btn {
+    background: #ff9800;
+    color: white;
+}
+
+.undo-btn:hover {
+    background: #f57c00;
+}
+
+.restart-game-btn {
+    background: #f44336;
+    color: white;
+}
+
+.restart-game-btn:hover {
+    background: #d32f2f;
+}
+
+.top-panel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 15px;
+}
+
+.leaderboard-btn {
+    background: #5020d3;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    white-space: nowrap;
+}
+
+.leaderboard-btn:hover {
+    background: #431ab3;
+}
+
+.leaderboard-modal .modal-content {
+    max-width: 350px;
+}
+
+.leaderboard-list {
+    max-height: 250px;
+    margin: 15px 0;
+    padding: 10px;
+}
+
+.leaderboard-entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 5px;
+    border-bottom: 1px solid #eee;
+}
+
+.leaderboard-entry .rank {
+    font-weight: bold;
+    color: #333;
+    min-width: 25px;
+}
+
+.leaderboard-entry .score-value {
+    font-weight: bold;
+    color: #2196F3;
+}
+
+.leaderboard-entry .date {
+    color: #666;
+    font-size: 12px;
+}
+
+.leaderboard-buttons {
+    margin-top: 15px;
+}
+
+.close-leaderboard-btn {
+    background: #f44336;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%;
+}
+
+.close-leaderboard-btn:hover {
+    background: #d32f2f;
 }

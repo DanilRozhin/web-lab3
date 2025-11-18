@@ -3,10 +3,19 @@ function createGameBoard() {
     container.className = 'game-container';
     document.body.appendChild(container);
 
+    const topPanel = document.createElement('div');
+    topPanel.className = 'top-panel';
+    container.appendChild(topPanel);
+
     const scoreElement = document.createElement('div');
     scoreElement.className = 'score';
     scoreElement.textContent = 'Счет: 0';
-    container.appendChild(scoreElement);
+    topPanel.appendChild(scoreElement);
+
+    const leaderboardBtn = document.createElement('button');
+    leaderboardBtn.className = 'leaderboard-btn';
+    leaderboardBtn.textContent = 'Таблица лидеров';
+    topPanel.appendChild(leaderboardBtn);
 
     const gameBoard = document.createElement('div');
     gameBoard.className = 'game-board';
@@ -22,13 +31,47 @@ function createGameBoard() {
         grid.appendChild(cell);
     }
 
+    const buttonsContainer = document.createElement('div');
+    buttonsContainer.className = 'buttons-container';
+    container.appendChild(buttonsContainer);
+
+    const undoBtn = document.createElement('button');
+    undoBtn.className = 'undo-btn';
+    undoBtn.textContent = 'Отменить ход';
+    buttonsContainer.appendChild(undoBtn);
+
+    const restartGameBtn = document.createElement('button');
+    restartGameBtn.className = 'restart-game-btn';
+    restartGameBtn.textContent = 'Начать заново';
+    buttonsContainer.appendChild(restartGameBtn);
+
     const { modal, message, restartBtn } = createModal();
 
-    return { container, gameBoard, grid, scoreElement, modal, message, restartBtn };
+    return { 
+        container, 
+        gameBoard, 
+        grid, 
+        scoreElement, 
+        modal, 
+        message, 
+        restartBtn, 
+        undoBtn, 
+        restartGameBtn,
+        leaderboardBtn 
+    };
 }
 
 function initGame() {
-    const { grid, scoreElement, modal, message, restartBtn } = createGameBoard();
+    const { 
+        grid, 
+        scoreElement, 
+        modal, 
+        message, 
+        restartBtn, 
+        undoBtn, 
+        restartGameBtn,
+        leaderboardBtn 
+    } = createGameBoard();
 
     const gameState = {
         size: 4,
@@ -39,7 +82,8 @@ function initGame() {
             [0, 0, 0, 0]
         ],
         score: 0,
-        scoreElement: scoreElement
+        scoreElement: scoreElement,
+        previousState: null
     };
 
     addRandomNumber(gameState, grid);
@@ -50,12 +94,72 @@ function initGame() {
         addRandomNumber(gameState, grid);
     }
 
+    saveGameState(gameState);
+
+    undoBtn.addEventListener('click', () => {
+        undoMove(gameState, grid);
+    });
+
+    restartGameBtn.addEventListener('click', () => {
+        restartGame(gameState, grid, modal);
+    });
+
     restartBtn.addEventListener('click', () => {
         hideModal(modal);
         restartGame(gameState, grid, modal);
     });
 
+    leaderboardBtn.addEventListener('click', () => {
+        showLeaderboard(gameState);
+    });
+
     setupKeyboardControls(gameState, grid, modal, message);
+}
+
+function showLeaderboard(gameState) {
+    const leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+    
+    const leaderboardModal = document.createElement('div');
+    leaderboardModal.className = 'modal leaderboard-modal';
+    leaderboardModal.style.display = 'flex';
+    
+    const modalContent = document.createElement('div');
+    modalContent.className = 'modal-content';
+    
+    const title = document.createElement('h2');
+    title.textContent = 'Таблица лидеров';
+    
+    const leaderboardList = document.createElement('div');
+    leaderboardList.className = 'leaderboard-list';
+    
+    if (leaderboard.length === 0) {
+        const emptyMessage = document.createElement('p');
+        emptyMessage.textContent = 'Пока нет результатов';
+        leaderboardList.appendChild(emptyMessage);
+    } else {
+        const sortedLeaderboard = leaderboard.sort((a, b) => b.score - a.score).slice(0, 10);
+        
+        sortedLeaderboard.forEach((entry, index) => {
+            const entryElement = document.createElement('div');
+            entryElement.className = 'leaderboard-entry';
+            entryElement.textContent = `${index + 1}. ${entry.name} - ${entry.score} (${new Date(entry.date).toLocaleDateString()})`;
+            leaderboardList.appendChild(entryElement);
+        });
+    }
+    
+    const closeButton = document.createElement('button');
+    closeButton.className = 'close-leaderboard-btn';
+    closeButton.textContent = 'Закрыть';
+    closeButton.addEventListener('click', () => {
+        leaderboardModal.remove();
+    });
+    
+    modalContent.appendChild(title);
+    modalContent.appendChild(leaderboardList);
+    modalContent.appendChild(closeButton);
+    leaderboardModal.appendChild(modalContent);
+    
+    document.body.appendChild(leaderboardModal);
 }
 
 function addRandomNumber(gameState, grid) {
@@ -325,6 +429,8 @@ function handleMoveLeft(gameState, grid, modal, message) {
     const result = moveLeft(gameState);
 
     if (result.moved) {
+        saveGameState(gameState);
+
         gameState.cells = result.cells;
         gameState.score = result.score;
 
@@ -339,9 +445,7 @@ function handleMoveLeft(gameState, grid, modal, message) {
         if (isGameOver(gameState)) {
             showGameOverModal(gameState, modal, message);
         }
-    }
-
-    else {
+    } else {
         if (isGameOver(gameState)) {
             showGameOverModal(gameState, modal, message);
         }
@@ -352,6 +456,8 @@ function handleMoveRight(gameState, grid, modal, message) {
     const result = moveRight(gameState);
 
     if (result.moved) {
+        saveGameState(gameState);
+    
         gameState.cells = result.cells;
         gameState.score = result.score;
 
@@ -366,9 +472,7 @@ function handleMoveRight(gameState, grid, modal, message) {
         if (isGameOver(gameState)) {
             showGameOverModal(gameState, modal, message);
         }
-    }
-
-    else {
+    } else {
         if (isGameOver(gameState)) {
             showGameOverModal(gameState, modal, message);
         }
@@ -379,6 +483,8 @@ function handleMoveUp(gameState, grid, modal, message) {
     const result = moveUp(gameState);
 
     if (result.moved) {
+        saveGameState(gameState);
+    
         gameState.cells = result.cells;
         gameState.score = result.score;
 
@@ -393,9 +499,7 @@ function handleMoveUp(gameState, grid, modal, message) {
         if (isGameOver(gameState)) {
             showGameOverModal(gameState, modal, message);
         }
-    }
-
-    else {
+    } else {        
         if (isGameOver(gameState)) {
             showGameOverModal(gameState, modal, message);
         }
@@ -406,6 +510,8 @@ function handleMoveDown(gameState, grid, modal, message) {
     const result = moveDown(gameState);
 
     if (result.moved) {
+        saveGameState(gameState);
+    
         gameState.cells = result.cells;
         gameState.score = result.score;
 
@@ -420,9 +526,7 @@ function handleMoveDown(gameState, grid, modal, message) {
         if (isGameOver(gameState)) {
             showGameOverModal(gameState, modal, message);
         }
-    }
-
-    else {
+    } else {        
         if (isGameOver(gameState)) {
             showGameOverModal(gameState, modal, message);
         }
@@ -510,18 +614,11 @@ function isGameOver(gameState) {
 function showGameOverModal(gameState, modal, message) {
     message.textContent = `Ваш счет: ${gameState.score}`;
     modal.style.display = 'flex';
-
-    setTimeout(() => {
-        modal.classList.add('show');
-    }, 10);
 }
 
 function hideModal(modal) {
+    modal.style.display = 'none';
     modal.classList.remove('show');
-    
-    setTimeout(() => {
-        modal.style.display = 'none';
-    }, 300);
 }
 
 function setupKeyboardControls(gameState, grid, modal, message) {
@@ -571,6 +668,7 @@ function restartGame(gameState, grid, modal) {
     ];
     gameState.score = 0;
     gameState.scoreElement.textContent = 'Счет: 0';
+    gameState.previousState = null;
     
     const tiles = document.querySelectorAll('.tile');
     tiles.forEach(tile => tile.remove());
@@ -583,6 +681,27 @@ function restartGame(gameState, grid, modal) {
     if (Math.random() < 0.3) {
         addRandomNumber(gameState, grid);
     }
+}
+
+function saveGameState(gameState) {
+    gameState.previousState = {
+        cells: JSON.parse(JSON.stringify(gameState.cells)),
+        score: gameState.score
+    };
+}
+
+function undoMove(gameState, grid) {
+    if (gameState.previousState) {
+        gameState.cells = JSON.parse(JSON.stringify(gameState.previousState.cells));
+        gameState.score = gameState.previousState.score;
+        gameState.scoreElement.textContent = `Счет: ${gameState.score}`;
+        
+        renderGame(gameState, grid);
+        
+        gameState.previousState = null;
+        return true;
+    }
+    return false;
 }
 
 document.addEventListener('DOMContentLoaded', initGame);
