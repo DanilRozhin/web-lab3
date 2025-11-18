@@ -45,7 +45,7 @@ function createGameBoard() {
     restartGameBtn.textContent = 'Начать заново';
     buttonsContainer.appendChild(restartGameBtn);
 
-    const { modal, message, restartBtn } = createModal();
+    const { modal, message, saveScoreBtn, restartBtn, nameInput } = createModal();
 
     return { 
         container, 
@@ -54,7 +54,9 @@ function createGameBoard() {
         scoreElement, 
         modal, 
         message, 
-        restartBtn, 
+        saveScoreBtn,
+        restartBtn,
+        nameInput,
         undoBtn, 
         restartGameBtn,
         leaderboardBtn 
@@ -67,34 +69,60 @@ function initGame() {
         scoreElement, 
         modal, 
         message, 
+        saveScoreBtn, 
         restartBtn, 
+        nameInput,
         undoBtn, 
         restartGameBtn,
         leaderboardBtn 
     } = createGameBoard();
 
-    const gameState = {
-        size: 4,
-        cells: [
-            [0, 0, 0, 0],
-            [0, 0, 0, 0],
-            [0, 0, 0, 0],
-            [0, 0, 0, 0]
-        ],
-        score: 0,
-        scoreElement: scoreElement,
-        previousState: null
-    };
+    const savedGameState = JSON.parse(localStorage.getItem('2048-saved-game'));
 
-    addRandomNumber(gameState, grid);
-    if (Math.random() > 0.5) {
-        addRandomNumber(gameState, grid);
-    }
-    if (Math.random() < 0.3) {
-        addRandomNumber(gameState, grid);
-    }
+    let gameState;
 
-    saveGameState(gameState);
+    if (savedGameState.gameStarted) {
+        gameState = {
+            size: savedGameState.size,
+            cells: savedGameState.cells,
+            score: savedGameState.score,
+            scoreElement: scoreElement,
+            previousState: savedGameState.previousState,
+            gameStarted: savedGameState.gameStarted
+        };
+        
+        const tiles = document.querySelectorAll('.tile');
+        tiles.forEach(tile => tile.remove());
+        
+        renderGame(gameState, grid);
+        gameState.scoreElement.textContent = `Счет: ${gameState.score}`;
+
+        saveGameState(gameState);
+    }
+    else {
+        gameState = {
+            size: 4,
+            cells: [
+                [0, 0, 0, 0],
+                [0, 0, 0, 0],
+                [0, 0, 0, 0],
+                [0, 0, 0, 0]
+            ],
+            score: 0,
+            scoreElement: scoreElement,
+            previousState: null,
+            gameStarted: false
+        };
+
+        addRandomNumber(gameState, grid);
+        if (Math.random() > 0.5) {
+            addRandomNumber(gameState, grid);
+        }
+        if (Math.random() < 0.3) {
+            addRandomNumber(gameState, grid);
+        }
+        saveGameState(gameState);
+    }
 
     undoBtn.addEventListener('click', () => {
         undoMove(gameState, grid);
@@ -102,6 +130,12 @@ function initGame() {
 
     restartGameBtn.addEventListener('click', () => {
         restartGame(gameState, grid, modal);
+    });
+
+    saveScoreBtn.addEventListener('click', () => {
+        const playerName = nameInput.value.trim();
+        saveCurrentScore(gameState, playerName);
+        hideModal(modal);
     });
 
     restartBtn.addEventListener('click', () => {
@@ -113,7 +147,7 @@ function initGame() {
         showLeaderboard(gameState);
     });
 
-    setupKeyboardControls(gameState, grid, modal, message);
+    setupKeyboardControls(gameState, grid, modal, message, saveScoreBtn, nameInput);
 }
 
 function showLeaderboard(gameState) {
@@ -142,7 +176,7 @@ function showLeaderboard(gameState) {
         sortedLeaderboard.forEach((entry, index) => {
             const entryElement = document.createElement('div');
             entryElement.className = 'leaderboard-entry';
-            entryElement.textContent = `${index + 1}. ${entry.name} - ${entry.score} (${new Date(entry.date).toLocaleDateString()})`;
+            entryElement.textContent = `${index + 1}. ${entry.name} - ${entry.score}`;
             leaderboardList.appendChild(entryElement);
         });
     }
@@ -161,6 +195,25 @@ function showLeaderboard(gameState) {
     
     document.body.appendChild(leaderboardModal);
 }
+
+function saveCurrentScore(gameState, playerName) {
+    if (!playerName) {
+        playerName = 'Без имени';
+    }
+    
+    const leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+    
+    const newEntry = {
+        name: playerName,
+        score: gameState.score
+    };
+    
+    leaderboard.push(newEntry);
+    localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+    
+    alert(`Результат ${gameState.score} записан в таблицу лидеров под именем "${playerName}".`);
+}
+
 
 function addRandomNumber(gameState, grid) {
     const emptyCells = [];
@@ -425,11 +478,18 @@ function moveDown(gameState) {
     };
 }
 
-function handleMoveLeft(gameState, grid, modal, message) {
+function handleMoveLeft(gameState, grid, modal, message, saveScoreBtn, nameInput) {
     const result = moveLeft(gameState);
 
     if (result.moved) {
-        saveGameState(gameState);
+        if (!gameState.gameStarted) {
+            gameState.gameStarted = true;
+        }
+
+        gameState.previousState = {
+            cells: JSON.parse(JSON.stringify(gameState.cells)),
+            score: gameState.score
+        };
 
         gameState.cells = result.cells;
         gameState.score = result.score;
@@ -442,21 +502,31 @@ function handleMoveLeft(gameState, grid, modal, message) {
             addRandomNumber(gameState, grid);
         }
 
+        saveGameState(gameState);
+
         if (isGameOver(gameState)) {
-            showGameOverModal(gameState, modal, message);
+            showGameOverModal(gameState, modal, message, saveScoreBtn, nameInput);
         }
-    } else {
+    }
+    else {
         if (isGameOver(gameState)) {
-            showGameOverModal(gameState, modal, message);
+            showGameOverModal(gameState, modal, message, saveScoreBtn, nameInput);
         }
     }
 }
 
-function handleMoveRight(gameState, grid, modal, message) {
+function handleMoveRight(gameState, grid, modal, message, saveScoreBtn, nameInput) {
     const result = moveRight(gameState);
 
     if (result.moved) {
-        saveGameState(gameState);
+        if (!gameState.gameStarted) {
+            gameState.gameStarted = true;
+        }
+
+        gameState.previousState = {
+            cells: JSON.parse(JSON.stringify(gameState.cells)),
+            score: gameState.score
+        };
     
         gameState.cells = result.cells;
         gameState.score = result.score;
@@ -469,21 +539,31 @@ function handleMoveRight(gameState, grid, modal, message) {
             addRandomNumber(gameState, grid);
         }
 
+        saveGameState(gameState);
+
         if (isGameOver(gameState)) {
-            showGameOverModal(gameState, modal, message);
+            showGameOverModal(gameState, modal, message, saveScoreBtn, nameInput);
         }
-    } else {
+    }
+    else {
         if (isGameOver(gameState)) {
-            showGameOverModal(gameState, modal, message);
+            showGameOverModal(gameState, modal, message, saveScoreBtn, nameInput);
         }
     }
 }
 
-function handleMoveUp(gameState, grid, modal, message) {
+function handleMoveUp(gameState, grid, modal, message, saveScoreBtn, nameInput) {
     const result = moveUp(gameState);
 
     if (result.moved) {
-        saveGameState(gameState);
+        if (!gameState.gameStarted) {
+            gameState.gameStarted = true;
+        }
+
+        gameState.previousState = {
+            cells: JSON.parse(JSON.stringify(gameState.cells)),
+            score: gameState.score
+        };
     
         gameState.cells = result.cells;
         gameState.score = result.score;
@@ -496,21 +576,31 @@ function handleMoveUp(gameState, grid, modal, message) {
             addRandomNumber(gameState, grid);
         }
 
+        saveGameState(gameState);
+
         if (isGameOver(gameState)) {
-            showGameOverModal(gameState, modal, message);
+            showGameOverModal(gameState, modal, message, saveScoreBtn, nameInput);
         }
-    } else {        
+    }
+    else {        
         if (isGameOver(gameState)) {
-            showGameOverModal(gameState, modal, message);
+            showGameOverModal(gameState, modal, message, saveScoreBtn, nameInput);
         }
     }
 }
 
-function handleMoveDown(gameState, grid, modal, message) {
+function handleMoveDown(gameState, grid, modal, message, saveScoreBtn, nameInput) {
     const result = moveDown(gameState);
 
     if (result.moved) {
-        saveGameState(gameState);
+        if (!gameState.gameStarted) {
+            gameState.gameStarted = true;
+        }
+
+        gameState.previousState = {
+            cells: JSON.parse(JSON.stringify(gameState.cells)),
+            score: gameState.score
+        };
     
         gameState.cells = result.cells;
         gameState.score = result.score;
@@ -523,12 +613,15 @@ function handleMoveDown(gameState, grid, modal, message) {
             addRandomNumber(gameState, grid);
         }
 
+        saveGameState(gameState);
+
         if (isGameOver(gameState)) {
-            showGameOverModal(gameState, modal, message);
+            showGameOverModal(gameState, modal, message, saveScoreBtn, nameInput);
         }
-    } else {        
+    }
+    else {        
         if (isGameOver(gameState)) {
-            showGameOverModal(gameState, modal, message);
+            showGameOverModal(gameState, modal, message, saveScoreBtn, nameInput);
         }
     }
 }
@@ -566,6 +659,16 @@ function createModal() {
     const message = document.createElement('p');
     message.className = 'final-score-message';
     message.textContent = 'Ваш счет: 0';
+
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.className = 'name-input';
+    nameInput.placeholder = 'Введите ваше имя';
+    nameInput.maxLength = 20;
+    
+    const saveScoreBtn = document.createElement('button');
+    saveScoreBtn.className = 'save-score-btn';
+    saveScoreBtn.textContent = 'Записать результат';
     
     const restartBtn = document.createElement('button');
     restartBtn.className = 'restart-btn';
@@ -573,6 +676,8 @@ function createModal() {
     
     modalContent.appendChild(title);
     modalContent.appendChild(message);
+    modalContent.appendChild(nameInput);
+    modalContent.appendChild(saveScoreBtn);
     modalContent.appendChild(restartBtn);
     modal.appendChild(modalContent);
     
@@ -581,7 +686,10 @@ function createModal() {
     return {
         modal,
         message,
-        restartBtn
+        saveScoreBtn,
+        restartBtn,
+        nameInput
+
     };
 }
 
@@ -611,9 +719,11 @@ function isGameOver(gameState) {
     return true;
 }
 
-function showGameOverModal(gameState, modal, message) {
+function showGameOverModal(gameState, modal, message, saveScoreBtn, nameInput) {
     message.textContent = `Ваш счет: ${gameState.score}`;
     modal.style.display = 'flex';
+    nameInput.value = '';
+    setTimeout(() => nameInput.focus(), 100);
 }
 
 function hideModal(modal) {
@@ -667,8 +777,11 @@ function restartGame(gameState, grid, modal) {
         [0, 0, 0, 0]
     ];
     gameState.score = 0;
+    gameState.gameStarted = false;
     gameState.scoreElement.textContent = 'Счет: 0';
     gameState.previousState = null;
+
+    localStorage.removeItem('2048-saved-game');
     
     const tiles = document.querySelectorAll('.tile');
     tiles.forEach(tile => tile.remove());
@@ -681,13 +794,19 @@ function restartGame(gameState, grid, modal) {
     if (Math.random() < 0.3) {
         addRandomNumber(gameState, grid);
     }
+
+    saveGameState(gameState);
 }
 
 function saveGameState(gameState) {
-    gameState.previousState = {
+    const gameStateToSave = {
+        size: gameState.size,
         cells: JSON.parse(JSON.stringify(gameState.cells)),
-        score: gameState.score
+        score: gameState.score,
+        gameStarted: gameState.gameStarted,
+        previousState: gameState.previousState
     };
+    localStorage.setItem('2048-saved-game', JSON.stringify(gameStateToSave));
 }
 
 function undoMove(gameState, grid) {
@@ -699,6 +818,7 @@ function undoMove(gameState, grid) {
         renderGame(gameState, grid);
         
         gameState.previousState = null;
+        saveGameState(gameState);
         return true;
     }
     return false;

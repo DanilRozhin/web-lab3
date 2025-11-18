@@ -189,7 +189,6 @@ body {
 
 .restart-btn:hover {
     background: #45a049;
-    transform: translateY(-1px);
 }
 
 .buttons-container {
@@ -254,52 +253,120 @@ body {
 
 .leaderboard-modal .modal-content {
     max-width: 350px;
+    padding: 20px;
 }
 
 .leaderboard-list {
     max-height: 250px;
+    overflow-y: auto;
     margin: 15px 0;
     padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background: #fafafa;
+}
+
+.leaderboard-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.leaderboard-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 2px;
+}
+
+.leaderboard-list::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 2px;
+}
+
+.leaderboard-list::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+.leaderboard-list {
+    scrollbar-width: thin;
+    scrollbar-color: #c1c1c1 #f1f1f1;
 }
 
 .leaderboard-entry {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 5px;
+    padding: 10px 8px;
     border-bottom: 1px solid #eee;
+    text-align: left;
+    font-size: 14px;
+    line-height: 1.4;
 }
 
-.leaderboard-entry .rank {
-    font-weight: bold;
-    color: #333;
-    min-width: 25px;
-}
-
-.leaderboard-entry .score-value {
-    font-weight: bold;
-    color: #2196F3;
-}
-
-.leaderboard-entry .date {
-    color: #666;
-    font-size: 12px;
+.leaderboard-entry:last-child {
+    border-bottom: none;
 }
 
 .leaderboard-buttons {
-    margin-top: 15px;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
 }
 
 .close-leaderboard-btn {
     background: #f44336;
     color: white;
     border: none;
-    padding: 10px 20px;
+    padding: 12px 20px;
     border-radius: 5px;
     cursor: pointer;
     width: 100%;
+    font-size: 14px;
+    font-weight: bold;
 }
 
 .close-leaderboard-btn:hover {
     background: #d32f2f;
+}
+
+.name-input {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+.name-input:focus {
+    border-color: #2196F3;
+    outline: none;
+}
+
+.save-score-btn {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.save-score-btn:hover {
+    background: #45a049;
+}
+
+.restart-btn {
+    background: #2196F3;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    width: 100%;
+}
+
+.restart-btn:hover {
+    background: #1976D2;
 }
