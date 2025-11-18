@@ -45,18 +45,11 @@ function createGameBoard() {
     restartGameBtn.textContent = 'Начать заново';
     buttonsContainer.appendChild(restartGameBtn);
 
-    const { modal, message, saveScoreBtn, restartBtn, nameInput } = createModal();
-
     return { 
         container, 
         gameBoard, 
         grid, 
         scoreElement, 
-        modal, 
-        message, 
-        saveScoreBtn,
-        restartBtn,
-        nameInput,
         undoBtn, 
         restartGameBtn,
         leaderboardBtn 
@@ -64,31 +57,37 @@ function createGameBoard() {
 }
 
 function initGame() {
+    const { modal, message, saveScoreBtn, restartBtn, nameInput } = createModal();
+    
+    const savedGameState = JSON.parse(localStorage.getItem('2048-saved-game'));
+
+    const isLeaderboardOpen = localStorage.getItem('leaderboard-open') === 'true';    
+    
+    if (savedGameState && savedGameState.gameOver && !savedGameState.scoreSaved) {
+        modal.style.display = 'flex';
+        message.textContent = `Ваш счет: ${savedGameState.score}`;
+        nameInput.value = '';
+    }
+    
     const { 
         grid, 
         scoreElement, 
-        modal, 
-        message, 
-        saveScoreBtn, 
-        restartBtn, 
-        nameInput,
         undoBtn, 
         restartGameBtn,
         leaderboardBtn 
     } = createGameBoard();
 
-    const savedGameState = JSON.parse(localStorage.getItem('2048-saved-game'));
-
     let gameState;
 
-    if (savedGameState.gameStarted) {
+    if (savedGameState && savedGameState.gameStarted) {
         gameState = {
             size: savedGameState.size,
             cells: savedGameState.cells,
             score: savedGameState.score,
             scoreElement: scoreElement,
             previousState: savedGameState.previousState,
-            gameStarted: savedGameState.gameStarted
+            gameStarted: savedGameState.gameStarted,
+            gameOver: savedGameState.gameOver,
         };
         
         const tiles = document.querySelectorAll('.tile');
@@ -96,6 +95,13 @@ function initGame() {
         
         renderGame(gameState, grid);
         gameState.scoreElement.textContent = `Счет: ${gameState.score}`;
+
+        if (savedGameState.gameOver || isGameOver(gameState)) {
+        gameState.gameOver = true;
+        if (modal.style.display !== 'flex') {
+            showGameOverModal(gameState, modal, message, saveScoreBtn, nameInput);
+        }
+    }
 
         saveGameState(gameState);
     }
@@ -111,7 +117,9 @@ function initGame() {
             score: 0,
             scoreElement: scoreElement,
             previousState: null,
-            gameStarted: false
+            gameStarted: false,
+            modalOpen: false,
+            gameOver: false,
         };
 
         addRandomNumber(gameState, grid);
@@ -135,11 +143,11 @@ function initGame() {
     saveScoreBtn.addEventListener('click', () => {
         const playerName = nameInput.value.trim();
         saveCurrentScore(gameState, playerName);
-        hideModal(modal);
+        hideModal(modal, gameState);
     });
 
     restartBtn.addEventListener('click', () => {
-        hideModal(modal);
+        hideModal(modal, gameState);
         restartGame(gameState, grid, modal);
     });
 
@@ -148,6 +156,14 @@ function initGame() {
     });
 
     setupKeyboardControls(gameState, grid, modal, message, saveScoreBtn, nameInput);
+
+    if (gameState.gameOver || gameState.modalOpen) {
+        showGameOverModal(gameState, modal, message, saveScoreBtn, nameInput);
+    }
+
+    if (isLeaderboardOpen) {
+        showLeaderboard(gameState);
+    }
 }
 
 function showLeaderboard(gameState) {
@@ -170,13 +186,14 @@ function showLeaderboard(gameState) {
         const emptyMessage = document.createElement('p');
         emptyMessage.textContent = 'Пока нет результатов';
         leaderboardList.appendChild(emptyMessage);
-    } else {
+    }
+    else {
         const sortedLeaderboard = leaderboard.sort((a, b) => b.score - a.score).slice(0, 10);
         
         sortedLeaderboard.forEach((entry, index) => {
             const entryElement = document.createElement('div');
             entryElement.className = 'leaderboard-entry';
-            entryElement.textContent = `${index + 1}. ${entry.name} - ${entry.score}`;
+            entryElement.textContent = `${index + 1}. ${entry.name} - ${entry.score} - ${entry.date}`;
             leaderboardList.appendChild(entryElement);
         });
     }
@@ -186,6 +203,7 @@ function showLeaderboard(gameState) {
     closeButton.textContent = 'Закрыть';
     closeButton.addEventListener('click', () => {
         leaderboardModal.remove();
+        localStorage.removeItem('leaderboard-open');
     });
     
     modalContent.appendChild(title);
@@ -194,6 +212,9 @@ function showLeaderboard(gameState) {
     leaderboardModal.appendChild(modalContent);
     
     document.body.appendChild(leaderboardModal);
+
+    localStorage.setItem('leaderboard-open', 'true');
+    leaderboardModal.id = 'leaderboard-modal';
 }
 
 function saveCurrentScore(gameState, playerName) {
@@ -203,15 +224,26 @@ function saveCurrentScore(gameState, playerName) {
     
     const leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
     
+    const currentDate = new Date().toLocaleDateString('ru-RU');
+    
     const newEntry = {
         name: playerName,
-        score: gameState.score
+        score: gameState.score,
+        date: currentDate
     };
     
     leaderboard.push(newEntry);
     localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
     
     alert(`Результат ${gameState.score} записан в таблицу лидеров под именем "${playerName}".`);
+    
+    gameState.scoreSaved = true;
+    localStorage.removeItem('2048-saved-game');
+    
+    const modal = document.querySelector('.modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
 }
 
 
@@ -479,6 +511,8 @@ function moveDown(gameState) {
 }
 
 function handleMoveLeft(gameState, grid, modal, message, saveScoreBtn, nameInput) {
+    if (gameState.gameOver) return;
+
     const result = moveLeft(gameState);
 
     if (result.moved) {
@@ -516,6 +550,8 @@ function handleMoveLeft(gameState, grid, modal, message, saveScoreBtn, nameInput
 }
 
 function handleMoveRight(gameState, grid, modal, message, saveScoreBtn, nameInput) {
+    if (gameState.gameOver) return;
+
     const result = moveRight(gameState);
 
     if (result.moved) {
@@ -553,6 +589,8 @@ function handleMoveRight(gameState, grid, modal, message, saveScoreBtn, nameInpu
 }
 
 function handleMoveUp(gameState, grid, modal, message, saveScoreBtn, nameInput) {
+    if (gameState.gameOver) return;
+
     const result = moveUp(gameState);
 
     if (result.moved) {
@@ -590,6 +628,9 @@ function handleMoveUp(gameState, grid, modal, message, saveScoreBtn, nameInput) 
 }
 
 function handleMoveDown(gameState, grid, modal, message, saveScoreBtn, nameInput) {
+    console.log(gameState);
+    if (gameState.gameOver) return;
+
     const result = moveDown(gameState);
 
     if (result.moved) {
@@ -723,16 +764,24 @@ function showGameOverModal(gameState, modal, message, saveScoreBtn, nameInput) {
     message.textContent = `Ваш счет: ${gameState.score}`;
     modal.style.display = 'flex';
     nameInput.value = '';
+    gameState.gameOver = true;
+    saveGameState(gameState);
+    console.log(gameState);
     setTimeout(() => nameInput.focus(), 100);
 }
 
-function hideModal(modal) {
+function hideModal(modal, gameState) {
     modal.style.display = 'none';
-    modal.classList.remove('show');
+
+    if (gameState) {
+        gameState.modalOpen = false;
+    }
 }
 
 function setupKeyboardControls(gameState, grid, modal, message) {
     document.addEventListener('keydown', (event) => {
+        if (gameState.gameOver) return;
+
         if (event.key === 'ArrowLeft') {
             event.preventDefault();
             handleMoveLeft(gameState, grid, modal, message);
@@ -767,7 +816,7 @@ function renderGame(gameState, grid) {
 
 function restartGame(gameState, grid, modal) {
     if (modal) {
-        hideModal(modal);
+        hideModal(modal, gameState);
     }
 
     gameState.cells = [
@@ -780,6 +829,8 @@ function restartGame(gameState, grid, modal) {
     gameState.gameStarted = false;
     gameState.scoreElement.textContent = 'Счет: 0';
     gameState.previousState = null;
+    gameState.modalOpen = false;
+    gameState.gameOver = false;
 
     localStorage.removeItem('2048-saved-game');
     
@@ -804,13 +855,18 @@ function saveGameState(gameState) {
         cells: JSON.parse(JSON.stringify(gameState.cells)),
         score: gameState.score,
         gameStarted: gameState.gameStarted,
-        previousState: gameState.previousState
+        previousState: gameState.previousState,
+        modalOpen: gameState.modalOpen,
+        gameOver: gameState.gameOver,
+        scoreSaved: gameState.scoreSaved || false
     };
     localStorage.setItem('2048-saved-game', JSON.stringify(gameStateToSave));
 }
 
 function undoMove(gameState, grid) {
-    if (gameState.previousState) {
+    if (gameState.gameOver) return false;
+
+    else if (gameState.previousState) {
         gameState.cells = JSON.parse(JSON.stringify(gameState.previousState.cells));
         gameState.score = gameState.previousState.score;
         gameState.scoreElement.textContent = `Счет: ${gameState.score}`;
