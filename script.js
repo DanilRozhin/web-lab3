@@ -1,5 +1,3 @@
-let lastMoveDirection = null;
-
 function createGameBoard() {
     const container = document.createElement('div');
     container.className = 'game-container';
@@ -275,13 +273,13 @@ function addRandomNumber(gameState, grid) {
     createRandomTile(value, row, col, grid);
 }
 
-function createTile(value, row, col, grid) {
+function createTile(value, row, col, grid, direction=null) {
     const tile = document.createElement('div');
     tile.className = `tile tile-${value}`;
     tile.textContent = value;
     
-    if (lastMoveDirection) {
-        switch(lastMoveDirection) {
+    if (direction) {
+        switch(direction) {
             case 'left':
                 tile.classList.add('tile-from-right');
                 break;
@@ -575,7 +573,7 @@ function handleMoveLeft(gameState, grid, modal, message, saveScoreBtn, nameInput
         gameState.cells = result.cells;
         gameState.score = result.score;
 
-        renderGame(gameState, grid);
+        renderGame(gameState, grid, 'left');
         gameState.scoreElement.textContent = `Счет: ${gameState.score}`;
         addRandomNumber(gameState, grid);
         const emptyCellsCount = countEmptyCells(gameState);
@@ -616,7 +614,7 @@ function handleMoveRight(gameState, grid, modal, message, saveScoreBtn, nameInpu
         gameState.cells = result.cells;
         gameState.score = result.score;
 
-        renderGame(gameState, grid);
+        renderGame(gameState, grid, 'right');
         gameState.scoreElement.textContent = `Счет: ${gameState.score}`;
         addRandomNumber(gameState, grid);
         const emptyCellsCount = countEmptyCells(gameState);
@@ -657,7 +655,7 @@ function handleMoveUp(gameState, grid, modal, message, saveScoreBtn, nameInput) 
         gameState.cells = result.cells;
         gameState.score = result.score;
 
-        renderGame(gameState, grid);
+        renderGame(gameState, grid, 'up');
         gameState.scoreElement.textContent = `Счет: ${gameState.score}`;
         addRandomNumber(gameState, grid);
         const emptyCellsCount = countEmptyCells(gameState);
@@ -698,7 +696,7 @@ function handleMoveDown(gameState, grid, modal, message, saveScoreBtn, nameInput
         gameState.cells = result.cells;
         gameState.score = result.score;
 
-        renderGame(gameState, grid);
+        renderGame(gameState, grid, 'down');
         gameState.scoreElement.textContent = `Счет: ${gameState.score}`;
         addRandomNumber(gameState, grid);
         const emptyCellsCount = countEmptyCells(gameState);
@@ -900,14 +898,14 @@ function setupSwipeControls(gameState, grid, modal, message, saveScoreBtn, nameI
     });
 }
 
-function renderGame(gameState, grid) {
+function renderGame(gameState, grid, direction=null) {
     const tiles = document.querySelectorAll('.tile');
     tiles.forEach(tile => tile.remove());
 
     for (let row = 0; row < gameState.size; row++) {
         for (let col = 0; col < gameState.size; col++) {
             if (gameState.cells[row][col] !== 0) {
-                createTile(gameState.cells[row][col], row, col, grid);
+                createTile(gameState.cells[row][col], row, col, grid, direction);
             }
         }
     }
