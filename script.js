@@ -1,3 +1,5 @@
+let lastMoveDirection = null;
+
 function createGameBoard() {
     const container = document.createElement('div');
     container.className = 'game-container';
@@ -252,7 +254,6 @@ function saveCurrentScore(gameState, playerName) {
     }
 }
 
-
 function addRandomNumber(gameState, grid) {
     const emptyCells = [];
     for (let row = 0; row < gameState.size; row++) {
@@ -271,7 +272,7 @@ function addRandomNumber(gameState, grid) {
 
     gameState.cells[row][col] = value;
 
-    createTile(value, row, col, grid);
+    createRandomTile(value, row, col, grid);
 }
 
 function createTile(value, row, col, grid) {
@@ -279,9 +280,47 @@ function createTile(value, row, col, grid) {
     tile.className = `tile tile-${value}`;
     tile.textContent = value;
     
+    if (lastMoveDirection) {
+        switch(lastMoveDirection) {
+            case 'left':
+                tile.classList.add('tile-from-right');
+                break;
+            case 'right':
+                tile.classList.add('tile-from-left');
+                break;
+            case 'up':
+                tile.classList.add('tile-from-bottom');
+                break;
+            case 'down':
+                tile.classList.add('tile-from-top');
+                break;
+        }
+    }
+    
     const cellIndex = row * 4 + col;
     const cell = grid.children[cellIndex];
     cell.appendChild(tile);
+    
+    setTimeout(() => {
+        tile.classList.remove('tile-from-left', 'tile-from-right', 'tile-from-top', 'tile-from-bottom');
+        tile.classList.add('tile-final');
+    }, 10);
+}
+
+function createRandomTile(value, row, col, grid) {
+    const tile = document.createElement('div');
+    tile.className = `tile tile-${value}`;
+    tile.textContent = value;
+    tile.style.transform = 'scale(0)';
+    
+    const cellIndex = row * 4 + col;
+    const cell = grid.children[cellIndex];
+    cell.appendChild(tile);
+    
+    setTimeout(() => {
+        tile.style.transition = 'transform 0.2s ease';
+        tile.style.transform = 'scale(1)';
+    }, 10);
 }
 
 function moveRowLeft(row) {
@@ -519,6 +558,8 @@ function moveDown(gameState) {
 function handleMoveLeft(gameState, grid, modal, message, saveScoreBtn, nameInput) {
     if (gameState.gameOver || gameState.scoreSaved) return;
 
+    lastMoveDirection = 'left';
+
     const result = moveLeft(gameState);
 
     if (result.moved) {
@@ -557,6 +598,8 @@ function handleMoveLeft(gameState, grid, modal, message, saveScoreBtn, nameInput
 
 function handleMoveRight(gameState, grid, modal, message, saveScoreBtn, nameInput) {
     if (gameState.gameOver || gameState.scoreSaved) return;
+
+    lastMoveDirection = 'right';
 
     const result = moveRight(gameState);
 
@@ -597,6 +640,8 @@ function handleMoveRight(gameState, grid, modal, message, saveScoreBtn, nameInpu
 function handleMoveUp(gameState, grid, modal, message, saveScoreBtn, nameInput) {
     if (gameState.gameOver || gameState.scoreSaved) return;
 
+    lastMoveDirection = 'up';
+
     const result = moveUp(gameState);
 
     if (result.moved) {
@@ -635,6 +680,8 @@ function handleMoveUp(gameState, grid, modal, message, saveScoreBtn, nameInput) 
 
 function handleMoveDown(gameState, grid, modal, message, saveScoreBtn, nameInput) {
     if (gameState.gameOver || gameState.scoreSaved) return;
+
+    lastMoveDirection = 'down';
 
     const result = moveDown(gameState);
 
@@ -864,6 +911,8 @@ function renderGame(gameState, grid) {
             }
         }
     }
+
+    lastMoveDirection = null;
 }
 
 function restartGame(gameState, grid, modal) {

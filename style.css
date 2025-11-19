@@ -59,6 +59,27 @@ body {
     align-items: center;
     font-size: min(7vw, 28px);
     font-weight: bold;
+    transition: transform 0.15s ease;
+}
+
+.tile-from-left {
+    transform: translateX(-50%);
+}
+
+.tile-from-right {
+    transform: translateX(50%);
+}
+
+.tile-from-top {
+    transform: translateY(-50%);
+}
+
+.tile-from-bottom {
+    transform: translateY(50%);
+}
+
+.tile-final {
+    transform: translate(0, 0);
 }
 
 .tile-2 {
