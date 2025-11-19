@@ -816,7 +816,6 @@ function showGameOverModal(gameState, modal, message, saveScoreBtn, nameInput) {
     nameInput.value = '';
     gameState.gameOver = true;
     saveGameState(gameState);
-    console.log(gameState);
     setTimeout(() => nameInput.focus(), 100);
 }
 
