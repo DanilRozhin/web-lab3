@@ -392,3 +392,90 @@ body {
 .restart-btn:hover {
     background: #1976D2;
 }
+
+@media (max-width: 400px) {
+    body {
+        padding: 5px;
+        align-items: flex-start;
+        min-height: 100vh;
+        height: auto;
+    }
+    
+    .game-container {
+        margin-top: 10px;
+    }
+    
+    .game-board {
+        padding: 3%;
+    }
+    
+    .top-panel {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    
+    .score {
+        font-size: 20px;
+        padding: 10px 15px;
+        margin-bottom: 0;
+        text-align: center;
+        min-width: auto;
+        width: 100%;
+    }
+    
+    .leaderboard-btn {
+        width: 100%;
+        padding: 10px 15px;
+        font-size: 13px;
+    }
+    
+    .buttons-container {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .undo-btn, .restart-game-btn {
+        min-width: auto;
+        width: 100%;
+        padding: 10px 15px;
+        font-size: 13px;
+    }
+    
+    .tile {
+        font-size: min(6vw, 24px);
+    }
+    
+    .modal-content {
+        padding: 20px 15px;
+        margin: 10px;
+    }
+    
+    .modal h2 {
+        font-size: 18px;
+    }
+    
+    .modal p {
+        font-size: 14px;
+    }
+    
+    .name-input {
+        font-size: 14px;
+        padding: 8px;
+    }
+    
+    .save-score-btn, .restart-btn {
+        font-size: 13px;
+        padding: 10px;
+    }
+    
+    .leaderboard-modal .modal-content {
+        padding: 15px;
+    }
+    
+    .leaderboard-entry {
+        font-size: 13px;
+        padding: 8px 6px;
+    }
+}
