@@ -38,6 +38,7 @@ body {
     grid-template-rows: repeat(4, 1fr);
     gap: 2%;
     height: 100%;
+    touch-action: manipulation;
 }
 
 .cell {

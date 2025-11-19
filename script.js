@@ -88,6 +88,7 @@ function initGame() {
             previousState: savedGameState.previousState,
             gameStarted: savedGameState.gameStarted,
             gameOver: savedGameState.gameOver,
+            scoreSaved: savedGameState.scoreSaved || false,
         };
         
         const tiles = document.querySelectorAll('.tile');
@@ -96,12 +97,12 @@ function initGame() {
         renderGame(gameState, grid);
         gameState.scoreElement.textContent = `Счет: ${gameState.score}`;
 
-        if (savedGameState.gameOver || isGameOver(gameState)) {
-        gameState.gameOver = true;
-        if (modal.style.display !== 'flex') {
-            showGameOverModal(gameState, modal, message, saveScoreBtn, nameInput);
+        if (!gameState.scoreSaved && (savedGameState.gameOver || isGameOver(gameState))) {
+            gameState.gameOver = true;
+            if (modal.style.display !== 'flex') {
+                showGameOverModal(gameState, modal, message, saveScoreBtn, nameInput);
+            }
         }
-    }
 
         saveGameState(gameState);
     }
@@ -120,6 +121,7 @@ function initGame() {
             gameStarted: false,
             modalOpen: false,
             gameOver: false,
+            scoreSaved: false,
         };
 
         addRandomNumber(gameState, grid);
@@ -156,8 +158,9 @@ function initGame() {
     });
 
     setupKeyboardControls(gameState, grid, modal, message, saveScoreBtn, nameInput);
+    setupSwipeControls(gameState, grid, modal, message, saveScoreBtn, nameInput, grid);
 
-    if (gameState.gameOver || gameState.modalOpen) {
+    if (!gameState.scoreSaved && (gameState.gameOver || gameState.modalOpen)) {
         showGameOverModal(gameState, modal, message, saveScoreBtn, nameInput);
     }
 
@@ -238,7 +241,10 @@ function saveCurrentScore(gameState, playerName) {
     alert(`Результат ${gameState.score} записан в таблицу лидеров под именем "${playerName}".`);
     
     gameState.scoreSaved = true;
-    localStorage.removeItem('2048-saved-game');
+    gameState.gameOver = false;
+    gameState.modalOpen = false;
+
+    saveGameState(gameState);
     
     const modal = document.querySelector('.modal');
     if (modal) {
@@ -511,7 +517,7 @@ function moveDown(gameState) {
 }
 
 function handleMoveLeft(gameState, grid, modal, message, saveScoreBtn, nameInput) {
-    if (gameState.gameOver) return;
+    if (gameState.gameOver || gameState.scoreSaved) return;
 
     const result = moveLeft(gameState);
 
@@ -550,7 +556,7 @@ function handleMoveLeft(gameState, grid, modal, message, saveScoreBtn, nameInput
 }
 
 function handleMoveRight(gameState, grid, modal, message, saveScoreBtn, nameInput) {
-    if (gameState.gameOver) return;
+    if (gameState.gameOver || gameState.scoreSaved) return;
 
     const result = moveRight(gameState);
 
@@ -589,7 +595,7 @@ function handleMoveRight(gameState, grid, modal, message, saveScoreBtn, nameInpu
 }
 
 function handleMoveUp(gameState, grid, modal, message, saveScoreBtn, nameInput) {
-    if (gameState.gameOver) return;
+    if (gameState.gameOver || gameState.scoreSaved) return;
 
     const result = moveUp(gameState);
 
@@ -628,8 +634,7 @@ function handleMoveUp(gameState, grid, modal, message, saveScoreBtn, nameInput) 
 }
 
 function handleMoveDown(gameState, grid, modal, message, saveScoreBtn, nameInput) {
-    console.log(gameState);
-    if (gameState.gameOver) return;
+    if (gameState.gameOver || gameState.scoreSaved) return;
 
     const result = moveDown(gameState);
 
@@ -780,7 +785,7 @@ function hideModal(modal, gameState) {
 
 function setupKeyboardControls(gameState, grid, modal, message) {
     document.addEventListener('keydown', (event) => {
-        if (gameState.gameOver) return;
+        if (gameState.gameOver || gameState.scoreSaved) return;
 
         if (event.key === 'ArrowLeft') {
             event.preventDefault();
@@ -797,6 +802,53 @@ function setupKeyboardControls(gameState, grid, modal, message) {
         else if (event.key === 'ArrowDown') {
             event.preventDefault();
             handleMoveDown(gameState, grid, modal, message);
+        }
+    });
+}
+
+function setupSwipeControls(gameState, grid, modal, message, saveScoreBtn, nameInput, element) {
+    let startX, startY;
+    const minSwipeDistance = 50;
+
+    element.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+    });
+
+    element.addEventListener('touchend', (e) => {
+        if (gameState.gameOver || gameState.scoreSaved) return;
+
+        const endX = e.changedTouches[0].clientX;
+        const endY = e.changedTouches[0].clientY;
+
+        const diffX = startX - endX;
+        const diffY = startY - endY;
+
+        // Направление свайпа
+        if (Math.abs(diffX) > Math.abs(diffY)) {
+            // Горизонтальный свайп
+            if (Math.abs(diffX) > minSwipeDistance) {
+                if (diffX > 0) {
+                    // Свайп влево
+                    handleMoveLeft(gameState, grid, modal, message, saveScoreBtn, nameInput);
+                }
+                else {
+                    // Свайп вправо
+                    handleMoveRight(gameState, grid, modal, message, saveScoreBtn, nameInput);
+                }
+            }
+        }
+        else {
+            // Вертикальный свайп
+            if (Math.abs(diffY) > minSwipeDistance) {
+                if (diffY > 0) {
+                    // Свайп вверх
+                    handleMoveUp(gameState, grid, modal, message, saveScoreBtn, nameInput);
+                } else {
+                    // Свайп вниз
+                    handleMoveDown(gameState, grid, modal, message, saveScoreBtn, nameInput);
+                }
+            }
         }
     });
 }
@@ -831,6 +883,7 @@ function restartGame(gameState, grid, modal) {
     gameState.previousState = null;
     gameState.modalOpen = false;
     gameState.gameOver = false;
+    gameState.scoreSaved = false;
 
     localStorage.removeItem('2048-saved-game');
     
@@ -864,7 +917,7 @@ function saveGameState(gameState) {
 }
 
 function undoMove(gameState, grid) {
-    if (gameState.gameOver) return false;
+    if (gameState.gameOver || gameState.scoreSaved) return;
 
     else if (gameState.previousState) {
         gameState.cells = JSON.parse(JSON.stringify(gameState.previousState.cells));
